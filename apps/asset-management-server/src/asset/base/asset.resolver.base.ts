@@ -13,6 +13,12 @@ import * as graphql from "@nestjs/graphql";
 import { GraphQLError } from "graphql";
 import { isRecordNotFoundError } from "../../prisma.util";
 import { MetaQueryPayload } from "../../util/MetaQueryPayload";
+import * as nestAccessControl from "nest-access-control";
+import * as gqlACGuard from "../../auth/gqlAC.guard";
+import { GqlDefaultAuthGuard } from "../../auth/gqlDefaultAuth.guard";
+import * as common from "@nestjs/common";
+import { AclFilterResponseInterceptor } from "../../interceptors/aclFilterResponse.interceptor";
+import { AclValidateRequestInterceptor } from "../../interceptors/aclValidateRequest.interceptor";
 import { Asset } from "./Asset";
 import { AssetCountArgs } from "./AssetCountArgs";
 import { AssetFindManyArgs } from "./AssetFindManyArgs";
@@ -24,10 +30,20 @@ import { AasxFindManyArgs } from "../../aasx/base/AasxFindManyArgs";
 import { Aasx } from "../../aasx/base/Aasx";
 import { AssetHierarchy } from "../../assetHierarchy/base/AssetHierarchy";
 import { AssetService } from "../asset.service";
+@common.UseGuards(GqlDefaultAuthGuard, gqlACGuard.GqlACGuard)
 @graphql.Resolver(() => Asset)
 export class AssetResolverBase {
-  constructor(protected readonly service: AssetService) {}
+  constructor(
+    protected readonly service: AssetService,
+    protected readonly rolesBuilder: nestAccessControl.RolesBuilder
+  ) {}
 
+  @graphql.Query(() => MetaQueryPayload)
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "read",
+    possession: "any",
+  })
   async _assetsMeta(
     @graphql.Args() args: AssetCountArgs
   ): Promise<MetaQueryPayload> {
@@ -37,12 +53,24 @@ export class AssetResolverBase {
     };
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.Query(() => [Asset])
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "read",
+    possession: "any",
+  })
   async assets(@graphql.Args() args: AssetFindManyArgs): Promise<Asset[]> {
     return this.service.assets(args);
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.Query(() => Asset, { nullable: true })
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "read",
+    possession: "own",
+  })
   async asset(
     @graphql.Args() args: AssetFindUniqueArgs
   ): Promise<Asset | null> {
@@ -53,7 +81,13 @@ export class AssetResolverBase {
     return result;
   }
 
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @graphql.Mutation(() => Asset)
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "create",
+    possession: "any",
+  })
   async createAsset(@graphql.Args() args: CreateAssetArgs): Promise<Asset> {
     return await this.service.createAsset({
       ...args,
@@ -69,7 +103,13 @@ export class AssetResolverBase {
     });
   }
 
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @graphql.Mutation(() => Asset)
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "update",
+    possession: "any",
+  })
   async updateAsset(
     @graphql.Args() args: UpdateAssetArgs
   ): Promise<Asset | null> {
@@ -97,6 +137,11 @@ export class AssetResolverBase {
   }
 
   @graphql.Mutation(() => Asset)
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "delete",
+    possession: "any",
+  })
   async deleteAsset(
     @graphql.Args() args: DeleteAssetArgs
   ): Promise<Asset | null> {
@@ -112,7 +157,13 @@ export class AssetResolverBase {
     }
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.ResolveField(() => [Aasx], { name: "aasxes" })
+  @nestAccessControl.UseRoles({
+    resource: "Aasx",
+    action: "read",
+    possession: "any",
+  })
   async findAasxes(
     @graphql.Parent() parent: Asset,
     @graphql.Args() args: AasxFindManyArgs
@@ -126,9 +177,15 @@ export class AssetResolverBase {
     return results;
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.ResolveField(() => AssetHierarchy, {
     nullable: true,
     name: "assetHierarchy",
+  })
+  @nestAccessControl.UseRoles({
+    resource: "AssetHierarchy",
+    action: "read",
+    possession: "any",
   })
   async getAssetHierarchy(
     @graphql.Parent() parent: Asset

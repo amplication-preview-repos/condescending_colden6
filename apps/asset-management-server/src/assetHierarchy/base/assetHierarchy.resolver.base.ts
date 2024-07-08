@@ -13,6 +13,12 @@ import * as graphql from "@nestjs/graphql";
 import { GraphQLError } from "graphql";
 import { isRecordNotFoundError } from "../../prisma.util";
 import { MetaQueryPayload } from "../../util/MetaQueryPayload";
+import * as nestAccessControl from "nest-access-control";
+import * as gqlACGuard from "../../auth/gqlAC.guard";
+import { GqlDefaultAuthGuard } from "../../auth/gqlDefaultAuth.guard";
+import * as common from "@nestjs/common";
+import { AclFilterResponseInterceptor } from "../../interceptors/aclFilterResponse.interceptor";
+import { AclValidateRequestInterceptor } from "../../interceptors/aclValidateRequest.interceptor";
 import { AssetHierarchy } from "./AssetHierarchy";
 import { AssetHierarchyCountArgs } from "./AssetHierarchyCountArgs";
 import { AssetHierarchyFindManyArgs } from "./AssetHierarchyFindManyArgs";
@@ -24,10 +30,20 @@ import { AssetFindManyArgs } from "../../asset/base/AssetFindManyArgs";
 import { Asset } from "../../asset/base/Asset";
 import { HierarchyLevel } from "../../hierarchyLevel/base/HierarchyLevel";
 import { AssetHierarchyService } from "../assetHierarchy.service";
+@common.UseGuards(GqlDefaultAuthGuard, gqlACGuard.GqlACGuard)
 @graphql.Resolver(() => AssetHierarchy)
 export class AssetHierarchyResolverBase {
-  constructor(protected readonly service: AssetHierarchyService) {}
+  constructor(
+    protected readonly service: AssetHierarchyService,
+    protected readonly rolesBuilder: nestAccessControl.RolesBuilder
+  ) {}
 
+  @graphql.Query(() => MetaQueryPayload)
+  @nestAccessControl.UseRoles({
+    resource: "AssetHierarchy",
+    action: "read",
+    possession: "any",
+  })
   async _assetHierarchiesMeta(
     @graphql.Args() args: AssetHierarchyCountArgs
   ): Promise<MetaQueryPayload> {
@@ -37,14 +53,26 @@ export class AssetHierarchyResolverBase {
     };
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.Query(() => [AssetHierarchy])
+  @nestAccessControl.UseRoles({
+    resource: "AssetHierarchy",
+    action: "read",
+    possession: "any",
+  })
   async assetHierarchies(
     @graphql.Args() args: AssetHierarchyFindManyArgs
   ): Promise<AssetHierarchy[]> {
     return this.service.assetHierarchies(args);
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.Query(() => AssetHierarchy, { nullable: true })
+  @nestAccessControl.UseRoles({
+    resource: "AssetHierarchy",
+    action: "read",
+    possession: "own",
+  })
   async assetHierarchy(
     @graphql.Args() args: AssetHierarchyFindUniqueArgs
   ): Promise<AssetHierarchy | null> {
@@ -55,7 +83,13 @@ export class AssetHierarchyResolverBase {
     return result;
   }
 
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @graphql.Mutation(() => AssetHierarchy)
+  @nestAccessControl.UseRoles({
+    resource: "AssetHierarchy",
+    action: "create",
+    possession: "any",
+  })
   async createAssetHierarchy(
     @graphql.Args() args: CreateAssetHierarchyArgs
   ): Promise<AssetHierarchy> {
@@ -73,7 +107,13 @@ export class AssetHierarchyResolverBase {
     });
   }
 
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @graphql.Mutation(() => AssetHierarchy)
+  @nestAccessControl.UseRoles({
+    resource: "AssetHierarchy",
+    action: "update",
+    possession: "any",
+  })
   async updateAssetHierarchy(
     @graphql.Args() args: UpdateAssetHierarchyArgs
   ): Promise<AssetHierarchy | null> {
@@ -101,6 +141,11 @@ export class AssetHierarchyResolverBase {
   }
 
   @graphql.Mutation(() => AssetHierarchy)
+  @nestAccessControl.UseRoles({
+    resource: "AssetHierarchy",
+    action: "delete",
+    possession: "any",
+  })
   async deleteAssetHierarchy(
     @graphql.Args() args: DeleteAssetHierarchyArgs
   ): Promise<AssetHierarchy | null> {
@@ -116,7 +161,13 @@ export class AssetHierarchyResolverBase {
     }
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.ResolveField(() => [Asset], { name: "assets" })
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "read",
+    possession: "any",
+  })
   async findAssets(
     @graphql.Parent() parent: AssetHierarchy,
     @graphql.Args() args: AssetFindManyArgs
@@ -130,9 +181,15 @@ export class AssetHierarchyResolverBase {
     return results;
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @graphql.ResolveField(() => HierarchyLevel, {
     nullable: true,
     name: "hierarchyLevel",
+  })
+  @nestAccessControl.UseRoles({
+    resource: "HierarchyLevel",
+    action: "read",
+    possession: "any",
   })
   async getHierarchyLevel(
     @graphql.Parent() parent: AssetHierarchy

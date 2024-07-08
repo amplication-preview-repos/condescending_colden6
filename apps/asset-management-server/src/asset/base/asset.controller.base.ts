@@ -16,7 +16,11 @@ import * as errors from "../../errors";
 import { Request } from "express";
 import { plainToClass } from "class-transformer";
 import { ApiNestedQuery } from "../../decorators/api-nested-query.decorator";
+import * as nestAccessControl from "nest-access-control";
+import * as defaultAuthGuard from "../../auth/defaultAuth.guard";
 import { AssetService } from "../asset.service";
+import { AclValidateRequestInterceptor } from "../../interceptors/aclValidateRequest.interceptor";
+import { AclFilterResponseInterceptor } from "../../interceptors/aclFilterResponse.interceptor";
 import { AssetCreateInput } from "./AssetCreateInput";
 import { Asset } from "./Asset";
 import { AssetFindManyArgs } from "./AssetFindManyArgs";
@@ -26,10 +30,24 @@ import { AasxFindManyArgs } from "../../aasx/base/AasxFindManyArgs";
 import { Aasx } from "../../aasx/base/Aasx";
 import { AasxWhereUniqueInput } from "../../aasx/base/AasxWhereUniqueInput";
 
+@swagger.ApiBearerAuth()
+@common.UseGuards(defaultAuthGuard.DefaultAuthGuard, nestAccessControl.ACGuard)
 export class AssetControllerBase {
-  constructor(protected readonly service: AssetService) {}
+  constructor(
+    protected readonly service: AssetService,
+    protected readonly rolesBuilder: nestAccessControl.RolesBuilder
+  ) {}
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @common.Post()
   @swagger.ApiCreatedResponse({ type: Asset })
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "create",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async createAsset(@common.Body() data: AssetCreateInput): Promise<Asset> {
     return await this.service.createAsset({
       data: {
@@ -57,9 +75,18 @@ export class AssetControllerBase {
     });
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get()
   @swagger.ApiOkResponse({ type: [Asset] })
   @ApiNestedQuery(AssetFindManyArgs)
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "read",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async assets(@common.Req() request: Request): Promise<Asset[]> {
     const args = plainToClass(AssetFindManyArgs, request.query);
     return this.service.assets({
@@ -80,9 +107,18 @@ export class AssetControllerBase {
     });
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get("/:id")
   @swagger.ApiOkResponse({ type: Asset })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "read",
+    possession: "own",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async asset(
     @common.Param() params: AssetWhereUniqueInput
   ): Promise<Asset | null> {
@@ -110,9 +146,18 @@ export class AssetControllerBase {
     return result;
   }
 
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @common.Patch("/:id")
   @swagger.ApiOkResponse({ type: Asset })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "update",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async updateAsset(
     @common.Param() params: AssetWhereUniqueInput,
     @common.Body() data: AssetUpdateInput
@@ -156,6 +201,14 @@ export class AssetControllerBase {
   @common.Delete("/:id")
   @swagger.ApiOkResponse({ type: Asset })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "delete",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async deleteAsset(
     @common.Param() params: AssetWhereUniqueInput
   ): Promise<Asset | null> {
@@ -186,8 +239,14 @@ export class AssetControllerBase {
     }
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get("/:id/aasxes")
   @ApiNestedQuery(AasxFindManyArgs)
+  @nestAccessControl.UseRoles({
+    resource: "Aasx",
+    action: "read",
+    possession: "any",
+  })
   async findAasxes(
     @common.Req() request: Request,
     @common.Param() params: AssetWhereUniqueInput
@@ -217,6 +276,11 @@ export class AssetControllerBase {
   }
 
   @common.Post("/:id/aasxes")
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "update",
+    possession: "any",
+  })
   async connectAasxes(
     @common.Param() params: AssetWhereUniqueInput,
     @common.Body() body: AasxWhereUniqueInput[]
@@ -234,6 +298,11 @@ export class AssetControllerBase {
   }
 
   @common.Patch("/:id/aasxes")
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "update",
+    possession: "any",
+  })
   async updateAasxes(
     @common.Param() params: AssetWhereUniqueInput,
     @common.Body() body: AasxWhereUniqueInput[]
@@ -251,6 +320,11 @@ export class AssetControllerBase {
   }
 
   @common.Delete("/:id/aasxes")
+  @nestAccessControl.UseRoles({
+    resource: "Asset",
+    action: "update",
+    possession: "any",
+  })
   async disconnectAasxes(
     @common.Param() params: AssetWhereUniqueInput,
     @common.Body() body: AasxWhereUniqueInput[]

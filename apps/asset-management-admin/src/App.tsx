@@ -21,6 +21,30 @@ import { AasxList } from "./aasx/AasxList";
 import { AasxCreate } from "./aasx/AasxCreate";
 import { AasxEdit } from "./aasx/AasxEdit";
 import { AasxShow } from "./aasx/AasxShow";
+import { UserList } from "./user/UserList";
+import { UserCreate } from "./user/UserCreate";
+import { UserEdit } from "./user/UserEdit";
+import { UserShow } from "./user/UserShow";
+import { RoleList } from "./role/RoleList";
+import { RoleCreate } from "./role/RoleCreate";
+import { RoleEdit } from "./role/RoleEdit";
+import { RoleShow } from "./role/RoleShow";
+import { RightList } from "./right/RightList";
+import { RightCreate } from "./right/RightCreate";
+import { RightEdit } from "./right/RightEdit";
+import { RightShow } from "./right/RightShow";
+import { RoleRightList } from "./roleRight/RoleRightList";
+import { RoleRightCreate } from "./roleRight/RoleRightCreate";
+import { RoleRightEdit } from "./roleRight/RoleRightEdit";
+import { RoleRightShow } from "./roleRight/RoleRightShow";
+import { UserRoleList } from "./userRole/UserRoleList";
+import { UserRoleCreate } from "./userRole/UserRoleCreate";
+import { UserRoleEdit } from "./userRole/UserRoleEdit";
+import { UserRoleShow } from "./userRole/UserRoleShow";
+import { AppUserList } from "./appUser/AppUserList";
+import { AppUserCreate } from "./appUser/AppUserCreate";
+import { AppUserEdit } from "./appUser/AppUserEdit";
+import { AppUserShow } from "./appUser/AppUserShow";
 import { jwtAuthProvider } from "./auth-provider/ra-auth-jwt";
 
 const App = (): React.ReactElement => {
@@ -74,6 +98,48 @@ const App = (): React.ReactElement => {
           edit={AasxEdit}
           create={AasxCreate}
           show={AasxShow}
+        />
+        <Resource
+          name="User"
+          list={UserList}
+          edit={UserEdit}
+          create={UserCreate}
+          show={UserShow}
+        />
+        <Resource
+          name="Role"
+          list={RoleList}
+          edit={RoleEdit}
+          create={RoleCreate}
+          show={RoleShow}
+        />
+        <Resource
+          name="Right"
+          list={RightList}
+          edit={RightEdit}
+          create={RightCreate}
+          show={RightShow}
+        />
+        <Resource
+          name="RoleRight"
+          list={RoleRightList}
+          edit={RoleRightEdit}
+          create={RoleRightCreate}
+          show={RoleRightShow}
+        />
+        <Resource
+          name="UserRole"
+          list={UserRoleList}
+          edit={UserRoleEdit}
+          create={UserRoleCreate}
+          show={UserRoleShow}
+        />
+        <Resource
+          name="AppUser"
+          list={AppUserList}
+          edit={AppUserEdit}
+          create={AppUserCreate}
+          show={AppUserShow}
         />
       </Admin>
     </div>

@@ -16,7 +16,11 @@ import * as errors from "../../errors";
 import { Request } from "express";
 import { plainToClass } from "class-transformer";
 import { ApiNestedQuery } from "../../decorators/api-nested-query.decorator";
+import * as nestAccessControl from "nest-access-control";
+import * as defaultAuthGuard from "../../auth/defaultAuth.guard";
 import { HierarchyLevelService } from "../hierarchyLevel.service";
+import { AclValidateRequestInterceptor } from "../../interceptors/aclValidateRequest.interceptor";
+import { AclFilterResponseInterceptor } from "../../interceptors/aclFilterResponse.interceptor";
 import { HierarchyLevelCreateInput } from "./HierarchyLevelCreateInput";
 import { HierarchyLevel } from "./HierarchyLevel";
 import { HierarchyLevelFindManyArgs } from "./HierarchyLevelFindManyArgs";
@@ -26,10 +30,24 @@ import { AssetHierarchyFindManyArgs } from "../../assetHierarchy/base/AssetHiera
 import { AssetHierarchy } from "../../assetHierarchy/base/AssetHierarchy";
 import { AssetHierarchyWhereUniqueInput } from "../../assetHierarchy/base/AssetHierarchyWhereUniqueInput";
 
+@swagger.ApiBearerAuth()
+@common.UseGuards(defaultAuthGuard.DefaultAuthGuard, nestAccessControl.ACGuard)
 export class HierarchyLevelControllerBase {
-  constructor(protected readonly service: HierarchyLevelService) {}
+  constructor(
+    protected readonly service: HierarchyLevelService,
+    protected readonly rolesBuilder: nestAccessControl.RolesBuilder
+  ) {}
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @common.Post()
   @swagger.ApiCreatedResponse({ type: HierarchyLevel })
+  @nestAccessControl.UseRoles({
+    resource: "HierarchyLevel",
+    action: "create",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async createHierarchyLevel(
     @common.Body() data: HierarchyLevelCreateInput
   ): Promise<HierarchyLevel> {
@@ -45,9 +63,18 @@ export class HierarchyLevelControllerBase {
     });
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get()
   @swagger.ApiOkResponse({ type: [HierarchyLevel] })
   @ApiNestedQuery(HierarchyLevelFindManyArgs)
+  @nestAccessControl.UseRoles({
+    resource: "HierarchyLevel",
+    action: "read",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async hierarchyLevels(
     @common.Req() request: Request
   ): Promise<HierarchyLevel[]> {
@@ -64,9 +91,18 @@ export class HierarchyLevelControllerBase {
     });
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get("/:id")
   @swagger.ApiOkResponse({ type: HierarchyLevel })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "HierarchyLevel",
+    action: "read",
+    possession: "own",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async hierarchyLevel(
     @common.Param() params: HierarchyLevelWhereUniqueInput
   ): Promise<HierarchyLevel | null> {
@@ -88,9 +124,18 @@ export class HierarchyLevelControllerBase {
     return result;
   }
 
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @common.Patch("/:id")
   @swagger.ApiOkResponse({ type: HierarchyLevel })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "HierarchyLevel",
+    action: "update",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async updateHierarchyLevel(
     @common.Param() params: HierarchyLevelWhereUniqueInput,
     @common.Body() data: HierarchyLevelUpdateInput
@@ -120,6 +165,14 @@ export class HierarchyLevelControllerBase {
   @common.Delete("/:id")
   @swagger.ApiOkResponse({ type: HierarchyLevel })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "HierarchyLevel",
+    action: "delete",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async deleteHierarchyLevel(
     @common.Param() params: HierarchyLevelWhereUniqueInput
   ): Promise<HierarchyLevel | null> {
@@ -144,8 +197,14 @@ export class HierarchyLevelControllerBase {
     }
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get("/:id/assetHierarchies")
   @ApiNestedQuery(AssetHierarchyFindManyArgs)
+  @nestAccessControl.UseRoles({
+    resource: "AssetHierarchy",
+    action: "read",
+    possession: "any",
+  })
   async findAssetHierarchies(
     @common.Req() request: Request,
     @common.Param() params: HierarchyLevelWhereUniqueInput
@@ -175,6 +234,11 @@ export class HierarchyLevelControllerBase {
   }
 
   @common.Post("/:id/assetHierarchies")
+  @nestAccessControl.UseRoles({
+    resource: "HierarchyLevel",
+    action: "update",
+    possession: "any",
+  })
   async connectAssetHierarchies(
     @common.Param() params: HierarchyLevelWhereUniqueInput,
     @common.Body() body: AssetHierarchyWhereUniqueInput[]
@@ -192,6 +256,11 @@ export class HierarchyLevelControllerBase {
   }
 
   @common.Patch("/:id/assetHierarchies")
+  @nestAccessControl.UseRoles({
+    resource: "HierarchyLevel",
+    action: "update",
+    possession: "any",
+  })
   async updateAssetHierarchies(
     @common.Param() params: HierarchyLevelWhereUniqueInput,
     @common.Body() body: AssetHierarchyWhereUniqueInput[]
@@ -209,6 +278,11 @@ export class HierarchyLevelControllerBase {
   }
 
   @common.Delete("/:id/assetHierarchies")
+  @nestAccessControl.UseRoles({
+    resource: "HierarchyLevel",
+    action: "update",
+    possession: "any",
+  })
   async disconnectAssetHierarchies(
     @common.Param() params: HierarchyLevelWhereUniqueInput,
     @common.Body() body: AssetHierarchyWhereUniqueInput[]

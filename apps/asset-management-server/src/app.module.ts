@@ -3,6 +3,12 @@ import { AssetModule } from "./asset/asset.module";
 import { HierarchyLevelModule } from "./hierarchyLevel/hierarchyLevel.module";
 import { AssetHierarchyModule } from "./assetHierarchy/assetHierarchy.module";
 import { AasxModule } from "./aasx/aasx.module";
+import { UserModule } from "./user/user.module";
+import { RoleModule } from "./role/role.module";
+import { RightModule } from "./right/right.module";
+import { RoleRightModule } from "./roleRight/roleRight.module";
+import { UserRoleModule } from "./userRole/userRole.module";
+import { AppUserModule } from "./appUser/appUser.module";
 import { HealthModule } from "./health/health.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { SecretsManagerModule } from "./providers/secrets/secretsManager.module";
@@ -12,13 +18,24 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
 
+import { ACLModule } from "./auth/acl.module";
+import { AuthModule } from "./auth/auth.module";
+
 @Module({
   controllers: [],
   imports: [
+    ACLModule,
+    AuthModule,
     AssetModule,
     HierarchyLevelModule,
     AssetHierarchyModule,
     AasxModule,
+    UserModule,
+    RoleModule,
+    RightModule,
+    RoleRightModule,
+    UserRoleModule,
+    AppUserModule,
     HealthModule,
     PrismaModule,
     SecretsManagerModule,

@@ -16,17 +16,35 @@ import * as errors from "../../errors";
 import { Request } from "express";
 import { plainToClass } from "class-transformer";
 import { ApiNestedQuery } from "../../decorators/api-nested-query.decorator";
+import * as nestAccessControl from "nest-access-control";
+import * as defaultAuthGuard from "../../auth/defaultAuth.guard";
 import { AasxService } from "../aasx.service";
+import { AclValidateRequestInterceptor } from "../../interceptors/aclValidateRequest.interceptor";
+import { AclFilterResponseInterceptor } from "../../interceptors/aclFilterResponse.interceptor";
 import { AasxCreateInput } from "./AasxCreateInput";
 import { Aasx } from "./Aasx";
 import { AasxFindManyArgs } from "./AasxFindManyArgs";
 import { AasxWhereUniqueInput } from "./AasxWhereUniqueInput";
 import { AasxUpdateInput } from "./AasxUpdateInput";
 
+@swagger.ApiBearerAuth()
+@common.UseGuards(defaultAuthGuard.DefaultAuthGuard, nestAccessControl.ACGuard)
 export class AasxControllerBase {
-  constructor(protected readonly service: AasxService) {}
+  constructor(
+    protected readonly service: AasxService,
+    protected readonly rolesBuilder: nestAccessControl.RolesBuilder
+  ) {}
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @common.Post()
   @swagger.ApiCreatedResponse({ type: Aasx })
+  @nestAccessControl.UseRoles({
+    resource: "Aasx",
+    action: "create",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async createAasx(@common.Body() data: AasxCreateInput): Promise<Aasx> {
     return await this.service.createAasx({
       data: {
@@ -53,9 +71,18 @@ export class AasxControllerBase {
     });
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get()
   @swagger.ApiOkResponse({ type: [Aasx] })
   @ApiNestedQuery(AasxFindManyArgs)
+  @nestAccessControl.UseRoles({
+    resource: "Aasx",
+    action: "read",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async aasxes(@common.Req() request: Request): Promise<Aasx[]> {
     const args = plainToClass(AasxFindManyArgs, request.query);
     return this.service.aasxes({
@@ -75,9 +102,18 @@ export class AasxControllerBase {
     });
   }
 
+  @common.UseInterceptors(AclFilterResponseInterceptor)
   @common.Get("/:id")
   @swagger.ApiOkResponse({ type: Aasx })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "Aasx",
+    action: "read",
+    possession: "own",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async aasx(
     @common.Param() params: AasxWhereUniqueInput
   ): Promise<Aasx | null> {
@@ -104,9 +140,18 @@ export class AasxControllerBase {
     return result;
   }
 
+  @common.UseInterceptors(AclValidateRequestInterceptor)
   @common.Patch("/:id")
   @swagger.ApiOkResponse({ type: Aasx })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "Aasx",
+    action: "update",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async updateAasx(
     @common.Param() params: AasxWhereUniqueInput,
     @common.Body() data: AasxUpdateInput
@@ -149,6 +194,14 @@ export class AasxControllerBase {
   @common.Delete("/:id")
   @swagger.ApiOkResponse({ type: Aasx })
   @swagger.ApiNotFoundResponse({ type: errors.NotFoundException })
+  @nestAccessControl.UseRoles({
+    resource: "Aasx",
+    action: "delete",
+    possession: "any",
+  })
+  @swagger.ApiForbiddenResponse({
+    type: errors.ForbiddenException,
+  })
   async deleteAasx(
     @common.Param() params: AasxWhereUniqueInput
   ): Promise<Aasx | null> {
